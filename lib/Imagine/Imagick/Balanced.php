@@ -2,30 +2,22 @@
 
 namespace Imagine\Imagick;
 
-class Balanced
+use Imagine\Image\AbstractBalanced;
+
+class Balanced extends AbstractBalanced
 {
     /**
-     * Get special offset for class
-     *
-     * @param  \Imagick $original
-     * @param  int      $targetWidth
-     * @param  int      $targetHeight
-     * @return array    The crop point coordinate
+     * {@inheritdoc}
      */
-    public function getSpecialOffset(\Imagick $original, $targetWidth, $targetHeight)
+    public function getSpecialOffset($original, $targetWidth, $targetHeight)
     {
         return $this->getRandomEdgeOffset($original, $targetWidth, $targetHeight);
     }
 
     /**
-     * Apply image filter and return the crop point
-     *
-     * @param  \Imagick $original
-     * @param  int      $targetWidth
-     * @param  int      $targetHeight
-     * @return array    The crop point coordinate
+     * {@inheritdoc}
      */
-    protected function getRandomEdgeOffset(\Imagick $original, $targetWidth, $targetHeight)
+    public function getRandomEdgeOffset($original, $targetWidth, $targetHeight)
     {
         $measureImage = clone($original);
         // Enhance edges with radius 1
@@ -39,15 +31,9 @@ class Balanced
     }
 
     /**
-     * Crop image in four to return four energetic points
-     *
-     * @param \Imagick  $originalImage
-     * @param int       $targetWidth
-     * @param int       $targetHeight
-     * @return array    The crop point coordinate
-     * @throws \Exception
+     * {@inheritdoc}
      */
-    protected function getOffsetBalanced(\Imagick $originalImage, $targetWidth, $targetHeight)
+    public function getOffsetBalanced($originalImage, $targetWidth, $targetHeight)
     {
         $size = $originalImage->getImageGeometry();
         $points = array();
@@ -114,15 +100,9 @@ class Balanced
     }
 
     /**
-     * By doing random sampling from the image, find the most energetic point on the passed in
-     * image
-     *
-     * @param \Imagick  $image
-     * @return array    The coordinate of the most energetic point
-     * @throws \Exception
+     * {@inheritdoc}
      */
-
-    protected function getHighestEnergyPoint(\Imagick $image)
+    public function getHighestEnergyPoint($image)
     {
         $size = $image->getImageGeometry();
         // It's more performant doing random pixel uplook via GD
@@ -143,7 +123,7 @@ class Balanced
             $r = ($rgb >> 16) & 0xFF;
             $g = ($rgb >> 8) & 0xFF;
             $b = $rgb & 0xFF;
-            $val =  $this->rgb2bw($r, $g, $b);
+            $val =  $this->getLuminanceFromRGB($r, $g, $b);
             $sum += $val;
             $xcenter += ($i + 1) * $val;
             $ycenter += ($j + 1) * $val;
@@ -154,19 +134,5 @@ class Balanced
         }
         $point = array('x' => $xcenter, 'y' => $ycenter, 'sum' => $sum / round($size['height'] * $size['width']));
         return $point;
-    }
-
-    /**
-     * Returns a YUV weighted greyscale value
-     *
-     * @param  int $r
-     * @param  int $g
-     * @param  int $b
-     * @return int
-     * @see http://en.wikipedia.org/wiki/YUV
-     */
-    protected function rgb2bw($r, $g, $b)
-    {
-        return ($r * 0.299) + ($g * 0.587) + ($b * 0.114);
     }
 }

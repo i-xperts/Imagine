@@ -1,32 +1,13 @@
 <?php
 
-/**
- * SlyCropEntropy
- *
- * This class finds the a position in the picture with the most energy in it.
- *
- * Energy is in this case calculated by this
- *
- * 1. Take the image and turn it into black and white
- * 2. Run a edge filter so that we're left with only edges.
- * 3. Find a piece in the picture that has the highest entropy (i.e. most edges)
- * 4. Return coordinates that makes sure that this piece of the picture is not cropped 'away'
- */
-
 namespace Imagine\Gd;
 
-use Imagine\Image\Point;
+use Imagine\Image\AbstractEntropy;
 
-class Entropy
+class Entropy extends AbstractEntropy
 {
-    const POTENTIAL_RATIO = 1.5;
     /**
-     * Get special offset for class
-     *
-     * @param  Image    $original
-     * @param  int      $targetWidth
-     * @param  int      $targetHeight
-     * @return array    The crop point coordinate
+     * {@inheritdoc}
      */
     public function getSpecialOffset($original, $targetWidth, $targetHeight)
     {
@@ -34,14 +15,9 @@ class Entropy
     }
 
     /**
-     * Get the topleftX and topleftY that will can be passed to a cropping method.
-     *
-     * @param  Image    $original
-     * @param  int      $targetWidth
-     * @param  int      $targetHeight
-     * @return array    The crop point coordinate
+     * {@inheritdoc}
      */
-    protected function getEntropyOffsets($original, $targetWidth, $targetHeight)
+    public function getEntropyOffsets($original, $targetWidth, $targetHeight)
     {
         $measureImage = $this->cloneResource($original->getGdResource());
         // Enhance edges
@@ -54,14 +30,9 @@ class Entropy
     }
 
     /**
-     * Get the offset of where the crop should start
-     *
-     * @param  resource $originalImage
-     * @param  int      $targetWidth
-     * @param  int      $targetHeight
-     * @return array    The crop point coordinate
+     * {@inheritdoc}
      */
-    protected function getOffsetFromEntropy($originalImage, $targetWidth, $targetHeight)
+    public function getOffsetFromEntropy($originalImage, $targetWidth, $targetHeight)
     {
         $originalWidth = imagesx($originalImage);
         $originalHeight = imagesy($originalImage);
@@ -82,16 +53,9 @@ class Entropy
     }
 
     /**
-     * Slice Image to find the most entropic point for the crop method
-     *
-     * @param resource  $image
-     * @param mixed     $originalSize
-     * @param mixed     $targetSize
-     * @param mixed     $axis         h = horizontal, v = vertical
-     * @access protected
-     * @return int|mixed
+     * {@inheritdoc}
      */
-    protected function slice($image, $originalSize, $targetSize, $axis)
+    public function slice($image, $originalSize, $targetSize, $axis)
     {
         $aSlice = null;
         $bSlice = null;
@@ -163,13 +127,9 @@ class Entropy
     }
 
     /**
-     * @param mixed $position
-     * @param mixed $top
-     * @param mixed $sliceSize
-     * @access protected
-     * @return int|mixed
+     * {@inheritdoc}
      */
-    protected function getPotential($position, $top, $sliceSize)
+    public function getPotential($position, $top, $sliceSize)
     {
         $safeZoneList = array();
         $safeRatio = 0;
@@ -197,20 +157,37 @@ class Entropy
     }
 
     /**
-     * Calculate the entropy for this image.
-     * A higher value of entropy means more noise / liveliness / color / business
-     *
-     * @param  resource $image
-     * @return float
-     *
-     * @see http://brainacle.com/calculating-image-entropy-with-python-how-and-why.html
-     * @see http://www.mathworks.com/help/toolbox/images/ref/entropy.html
+     * {@inheritdoc}
      */
-    protected function grayscaleEntropy($image)
+    public function grayscaleEntropy($image)
     {
         // The histogram consists of a list of 0-254 and the number of pixels that has that value
         $histogram = $this->ImageHistogram($image);
         return $this->getEntropy($histogram, $this->area($image));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function area($image)
+    {
+        return imagesx($image) * imagesy($image);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getEntropy($histogram, $area)
+    {
+        $value = 0.0;
+        foreach ($histogram as $occur) {
+            // calculates the percentage of pixels having this color value
+            $p = $occur / $area;
+            // A common way of representing entropy in scalar
+            $value = $value + $p * log($p, 2);
+        }
+        // $value is always 0.0 or negative, so transform into positive scalar value
+        return -$value;
     }
 
     /**
@@ -230,35 +207,6 @@ class Entropy
         }
         $colorsOccur = array_count_values($colors);
         return $colorsOccur;
-    }
-
-    /**
-     * Get the area in pixels for this image
-     *
-     * @param  resource $image
-     * @return int
-     */
-    protected function area($image)
-    {
-        return imagesx($image) * imagesy($image);
-    }
-
-    /**
-     * @param  array $histogram - a value[count] array
-     * @param  int   $area
-     * @return float
-     */
-    protected function getEntropy($histogram, $area)
-    {
-        $value = 0.0;
-        foreach ($histogram as $occur) {
-            // calculates the percentage of pixels having this color value
-            $p = $occur / $area;
-            // A common way of representing entropy in scalar
-            $value = $value + $p * log($p, 2);
-        }
-        // $value is always 0.0 or negative, so transform into positive scalar value
-        return -$value;
     }
 
     /**

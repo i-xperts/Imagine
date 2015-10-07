@@ -1,46 +1,23 @@
 <?php
 
-/**
- * SlyCropEntropy
- *
- * This class finds the a position in the picture with the most energy in it.
- *
- * Energy is in this case calculated by this
- *
- * 1. Take the image and turn it into black and white
- * 2. Run a edge filter so that we're left with only edges.
- * 3. Find a piece in the picture that has the highest entropy (i.e. most edges)
- * 4. Return coordinates that makes sure that this piece of the picture is not cropped 'away'
- *
- */
-
 namespace Imagine\Gmagick;
 
-class Entropy
+use Imagine\Image\AbstractEntropy;
+
+class Entropy extends AbstractEntropy
 {
-    const POTENTIAL_RATIO = 1.5;
     /**
-     * Get special offset for class
-     *
-     * @param  \Gmagick $original
-     * @param  int      $targetWidth
-     * @param  int      $targetHeight
-     * @return array
+     * {@inheritdoc}
      */
-    public function getSpecialOffset(\Gmagick $original, $targetWidth, $targetHeight)
+    public function getSpecialOffset($original, $targetWidth, $targetHeight)
     {
         return $this->getEntropyOffsets($original, $targetWidth, $targetHeight);
     }
 
     /**
-     * Get the topleftX and topleftY that will can be passed to a cropping method.
-     *
-     * @param  \Gmagick $original
-     * @param  int      $targetWidth
-     * @param  int      $targetHeight
-     * @return array    The crop point coordinate
+     * {@inheritdoc}
      */
-    protected function getEntropyOffsets(\Gmagick $original, $targetWidth, $targetHeight)
+    public function getEntropyOffsets($original, $targetWidth, $targetHeight)
     {
         $measureImage = clone($original);
         // Enhance edges
@@ -52,14 +29,9 @@ class Entropy
     }
 
     /**
-     * Get the offset of where the crop should start
-     *
-     * @param  \Gmagick $originalImage
-     * @param  int      $targetWidth
-     * @param  int      $targetHeight
-     * @return array    The crop point coordinate
+     * {@inheritdoc}
      */
-    protected function getOffsetFromEntropy(\Gmagick $originalImage, $targetWidth, $targetHeight)
+    public function getOffsetFromEntropy($originalImage, $targetWidth, $targetHeight)
     {
         // The entropy works better on a blured image
         $image = clone($originalImage);
@@ -80,16 +52,9 @@ class Entropy
     }
 
     /**
-     * Slice Image to find the most entropic point for the crop method
-     *
-     * @param mixed     $image
-     * @param mixed     $originalSize
-     * @param mixed     $targetSize
-     * @param mixed     $axis         h = horizontal, v = vertical
-     * @access protected
-     * @return int|mixed
+     * {@inheritdoc}
      */
-    protected function slice($image, $originalSize, $targetSize, $axis)
+    public function slice($image, $originalSize, $targetSize, $axis)
     {
         $aSlice = null;
         $bSlice = null;
@@ -156,15 +121,9 @@ class Entropy
     }
 
     /**
-     * getPotential
-     *
-     * @param mixed $position
-     * @param mixed $top
-     * @param mixed $sliceSize
-     * @access protected
-     * @return int|mixed
+     * {@inheritdoc}
      */
-    protected function getPotential($position, $top, $sliceSize)
+    public function getPotential($position, $top, $sliceSize)
     {
         $safeZoneList = array();
         $safeRatio = 0;
@@ -192,16 +151,9 @@ class Entropy
     }
 
     /**
-     * Calculate the entropy for this image.
-     * A higher value of entropy means more noise / liveliness / color / business
-     *
-     * @param  \Gmagick $image
-     * @return float
-     *
-     * @see http://brainacle.com/calculating-image-entropy-with-python-how-and-why.html
-     * @see http://www.mathworks.com/help/toolbox/images/ref/entropy.html
+     * {@inheritdoc}
      */
-    protected function grayscaleEntropy(\Gmagick $image)
+    public function grayscaleEntropy($image)
     {
         // The histogram consists of a list of 0-254 and the number of pixels that has that value
         $histogram = $image->getImageHistogram();
@@ -209,65 +161,18 @@ class Entropy
     }
 
     /**
-     * Find out the entropy for a color image
-     *
-     * If the source image is in color we need to transform RGB into a grayscale image
-     * so we can calculate the entropy more performant.
-     *
-     * @param  \Gmagick $image
-     * @return float
+     * {@inheritdoc}
      */
-    protected function colorEntropy(\Gmagick $image)
-    {
-        $histogram = $image->getImageHistogram();
-        $newHistogram = array();
-        // Translates a color histogram into a bw histogram
-        $colors = count($histogram);
-        for ($idx = 0; $idx < $colors; $idx++) {
-            $colors = $histogram[$idx]->getColor();
-            $grey = $this->rgb2bw($colors['r'], $colors['g'], $colors['b']);
-            if (!isset($newHistogram[$grey])) {
-                $newHistogram[$grey] = $histogram[$idx]->getColorCount();
-            } else {
-                $newHistogram[$grey] += $histogram[$idx]->getColorCount();
-            }
-        }
-        return $this->getEntropy($newHistogram, $this->area($image));
-    }
-
-    /**
-     * Get the area in pixels for this image
-     *
-     * @param  \Gmagick $image
-     * @return int
-     */
-    protected function area(\Gmagick $image)
+    public function area($image)
     {
         $size = array('width' => $image->getImageWidth(), 'height' => $image->getImageHeight());
         return $size['height'] * $size['width'];
     }
 
     /**
-     * Returns a YUV weighted greyscale value
-     *
-     * @param  int $r
-     * @param  int $g
-     * @param  int $b
-     * @return int
-     * @see http://en.wikipedia.org/wiki/YUV
+     * {@inheritdoc}
      */
-    protected function rgb2bw($r, $g, $b)
-    {
-        return ($r * 0.299) + ($g * 0.587) + ($b * 0.114);
-    }
-
-    /**
-     *
-     * @param  array $histogram - a value[count] array
-     * @param  int   $area
-     * @return float
-     */
-    protected function getEntropy($histogram, $area)
+    public function getEntropy($histogram, $area)
     {
         $value = 0.0;
         $colors = count($histogram);
