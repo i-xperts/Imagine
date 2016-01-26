@@ -141,6 +141,40 @@ final class Image extends AbstractImage
         return $this;
     }
 
+    final public function autoFrame(BoxInterface $size, $proportion = 1.618, ColorInterface $background = null)
+    {
+        $imgSize  = $this->getSize();
+        $imgProp  = $imgSize->getWidth()/$imgSize->getHeight();
+
+        $imagine = new Imagine();
+
+        if ($background) {
+            $newImage = $imagine->create($size, $background);
+        }
+        else {
+            $newImage = $imagine->create($size);
+        }
+        $newProp  = $size->getWidth()/$size->getHeight();
+
+        if ($newProp >= $imgProp) {
+            // Portrait Mode
+            $imgY = $size->getHeight()/$proportion;
+            $imgX = $imgY/$imgProp;
+            $imgBox = new Box($imgX, $imgY);
+        }
+        else {
+            // Landscape Mode
+            $imgX = $size->getWidth()/$proportion;
+            $imgY = $imgX/$imgProp;
+            $imgBox = new Box($imgX, $imgY);
+        }
+
+        $this->resize($imgBox);
+
+        $pastePoint = new Point(($size->getWidth() - $imgX)/2, ($size->getHeight() - $imgY)/2);
+        $newImage->paste($this, $pastePoint);
+    }
+
     /**
      * {@inheritdoc}
      *

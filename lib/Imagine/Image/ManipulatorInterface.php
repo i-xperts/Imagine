@@ -59,6 +59,16 @@ interface ManipulatorInterface
     public function autoCrop();
 
     /**
+     * Frames the source image with proportional boarder and resizes the final image (modifies the source image)
+     * Returns framed self
+     *
+     * @throws RuntimeException
+     *
+     * @return static
+     */
+    public function autoFrame(BoxInterface $size, $proportion = 1.618, ColorInterface $background = null);
+
+    /**
      * Return the starting point for a crop Balanced
      *
      * @param BoxInterface $size
