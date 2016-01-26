@@ -119,6 +119,22 @@ final class Image extends AbstractImage
     /**
      * {@inheritdoc}
      *
+     * @return ImageInterface
+     */
+    final public function autoCrop()
+    {
+        try {
+            $cropImage = $this->gmagick->trimimage(0.1);
+        } catch (\GmagickException $e) {
+            throw new RuntimeException('AutoCrop operation failed', $e->getCode(), $e);
+        }
+
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     *
      * @return PointInterface
      */
     final public function getPointBalanced(BoxInterface $size)

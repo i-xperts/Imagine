@@ -49,6 +49,16 @@ interface ManipulatorInterface
     public function crop(PointInterface $start, BoxInterface $size);
 
     /**
+     * Crops a box define by autodetect sides out of the source image (modifies the source image)
+     * Returns cropped self
+     *
+     * @throws RuntimeException
+     *
+     * @return static
+     */
+    public function autoCrop();
+
+    /**
      * Return the starting point for a crop Balanced
      *
      * @param BoxInterface $size

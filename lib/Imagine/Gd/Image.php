@@ -126,6 +126,21 @@ final class Image extends AbstractImage
         return $this;
     }
 
+    final public function autoCrop()
+    {
+        if (version_compare('5.5', PHP_VERSION, '>')) {
+            throw new RuntimeException('PHP version is to old');
+        }
+
+        $cropImage = imagecropauto($this->resource, IMG_CROP_SIDES);
+
+        imagedestroy($this->resource);
+
+        $this->resource = $cropImage;
+
+        return $this;
+    }
+
     /**
      * {@inheritdoc}
      *
