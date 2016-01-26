@@ -159,7 +159,7 @@ final class Image extends AbstractImage
         if ($newProp >= $imgProp) {
             // Portrait Mode
             $imgY = $size->getHeight()/$proportion;
-            $imgX = $imgY/$imgProp;
+            $imgX = $imgY*$imgProp;
             $imgBox = new Box($imgX, $imgY);
         }
         else {
@@ -173,6 +173,10 @@ final class Image extends AbstractImage
 
         $pastePoint = new Point(($size->getWidth() - $imgX)/2, ($size->getHeight() - $imgY)/2);
         $newImage->paste($this, $pastePoint);
+
+        imagedestroy($this->resource);
+
+        return $newImage;
     }
 
     /**
