@@ -134,9 +134,12 @@ final class Image extends AbstractImage
 
         $cropImage = imagecropauto($this->resource, IMG_CROP_SIDES);
 
-        imagedestroy($this->resource);
-
-        $this->resource = $cropImage;
+        // Since imagecropauto() doesn't always succeed - we 
+        // should make a check, else we give back the original
+        if ($cropImage !== false) {
+            imagedestroy($this->resource);
+            $this->resource = $cropImage;
+        }
 
         return $this;
     }
